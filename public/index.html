@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Święta LM</title>
+    <link rel="stylesheet" href="styles.css">
+   
+</head>
+<body>
+
+<h2 id="mainHeader">Święta LM</h2>
+
+<div id="loginSection">
+    <input type="tel" id="usernameInput" placeholder="LDAP">
+    <button id="loginButton" class="button-1">Zaloguj</button>
+</div>
+<div id="loadingMessage" style="display: none;">Wczytuję dane...</div>
+
+<div id="selectionSection">
+    <h3>Wybierz opcję:</h3>
+    <div id="selectionButtons">
+        <button id="returnButton">Zwrot</button>
+        <button id="zapasButton">Zapas-KPI</button>
+    </div>
+</div>
+
+<div id="searchSection" style="display: none;">
+    <h2>Zwrot Świąt</h2>
+    <p>LM - <span id="sklepName"></span></p>
+    <p>Dostawca: <span id="supplier"></span></p>
+    <p>Kwota Zwrotu: <span id="returnPolicy"></span></p>
+    <input type="tel" id="searchInput" placeholder="Wprowadź dane">
+    <button id="searchButton" class="button-1">Wyszukaj</button>
+
+    <h3>Wyniki wyszukiwania:</h3>
+    <div id="searchloadingMessage">Wyszukiwanie danych...</div>
+    <div id="noResultsMessage">Brak pasujących wyników.</div>
+    <div id="resultContainer" style="display: none;"></div>
+    <div id="searchSection" style="display: none;"></div>
+    <div id="calculationContainer" style="display: none;">
+        <label for="quantityInput">Ilość:</label>
+        <input type="tel" id="quantityInput" class="input-1" placeholder="Wprowadź ilość">
+        
+        <label for="valueOutput">Wartość:</label>
+        <input type="text" id="valueOutput" placeholder="Wynik" readonly>
+    </div>
+    <div id="saveButtonContainer" style="display: flex; justify-content: center; margin-top: 10px;">
+        <button id="saveButton" class="button-1" style="display: none;">Zapisz</button>
+        <button id="endButton" style="display: none;">Zakończ</button> 
+    </div>
+    
+</div>
+
+<script>
+    document.getElementById('usernameInput').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            loginUser();
+        }
+    });
+
+    document.getElementById('loginButton').addEventListener('click', (e) => {
+        e.preventDefault();
+        loginUser();
+    });
+
+    function loginUser() {
+    const username = document.getElementById('usernameInput').value.trim();
+    if (!username) {
+        alert('Proszę wprowadzić nazwę użytkownika.');
+        return;
+    }
+
+    document.getElementById('loadingMessage').style.display = 'block';
+    document.getElementById('loginSection').style.display = 'none';
+
+    fetch('/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username })
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('loadingMessage').style.display = 'none';
+        
+        if (data.success) {
+            document.getElementById('selectionSection').style.display = 'block'; //JS
+            document.getElementById('sklepName').textContent = data.sklep;
+            document.getElementById('supplier').textContent = data.supplier;
+            document.getElementById('returnPolicy').textContent = data.returnPolicy;
+        } else {
+            alert(data.message);
+            document.getElementById('loginSection').style.display = 'block';
+        }
+    })
+    .catch(error => {
+        console.error('Błąd logowania:', error);
+        alert('Wystąpił błąd podczas logowania.');
+        document.getElementById('loadingMessage').style.display = 'none'; 
+        document.getElementById('loginSection').style.display = 'block'; 
+    });
+}
+    document.getElementById('returnButton').addEventListener('click', () => {
+        document.getElementById('selectionSection').style.display = 'none'; 
+        document.getElementById('searchSection').style.display = 'block'; 
+    });
+
+    document.getElementById('zapasButton').addEventListener('click', () => {
+        window.location.href = '/zapas.html';
+    });
+
+    document.getElementById('searchButton').addEventListener('click', searchData);
+    document.getElementById('searchInput').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            searchData();
+        }
+    });
+    document.getElementById('searchInput').addEventListener('input', () => {
+        const searchInput = document.getElementById('searchInput').value.trim();
+        if (/^\d{13}$/.test(searchInput)) {
+            searchData();
+        }
+        });      
+    function searchData() {
+    const searchInput = document.getElementById('searchInput').value.trim();
+    const loadingMessage = document.getElementById('searchloadingMessage');
+    const noResultsMessage = document.getElementById('noResultsMessage');
+    const resultContainer = document.getElementById('resultContainer');
+    const endButton = document.getElementById('endButton'); 
+
+    loadingMessage.style.display = 'block';
+    noResultsMessage.style.display = 'none';
+    resultContainer.style.display = 'none';
+    endButton.style.display = 'block'; 
+
+    if (!searchInput) {
+        loadingMessage.style.display = 'none';
+        noResultsMessage.style.display = 'block';
+        return;
+    }
+    fetch(`/search?searchInput=${encodeURIComponent(searchInput)}`)
+        .then(response => response.json())
+        .then(data => {
+            loadingMessage.style.display = 'none';
+
+            if (data.filteredData.length === 0) {
+                noResultsMessage.style.display = 'block';
+                endButton.style.display = 'block'; 
+                return;
+            }
+
+            let tables = '';
+            data.filteredData.forEach(row => {
+                tables += '<table>';
+                row.forEach((cell, index) => {
+                    tables += `<tr><th>${data.headers[index]}</th><td>${cell}</td></tr>`;
+                });
+                tables += '</table><br>';
+            });
+            
+            resultContainer.innerHTML = tables;
+            resultContainer.style.display = 'block';
+            document.getElementById('calculationContainer').style.display = 'block';
+            document.getElementById('saveButton').style.display = 'block';
+            endButton.style.display = 'none'; 
+
+            const unitPrice = parseFloat(data.filteredData[0][3].replace(',', '.')); 
+            const returnValueText = data.returnValue;
+            document.getElementById('returnPolicy').textContent = returnValueText;
+            document.getElementById('quantityInput').addEventListener('input', () => {
+                const quantity = parseFloat(document.getElementById('quantityInput').value) || 0;
+                const returnValue = parseFloat(returnValueText.replace(/\s/g, '').replace(',', '.')) || 0;
+                const value = returnValue - quantity * unitPrice;
+                document.getElementById('valueOutput').value = value.toFixed(2);
+            });
+
+            resultContainer.setAttribute('data-result', JSON.stringify(data));
+        })
+        .catch(error => {
+            loadingMessage.style.display = 'none';
+            noResultsMessage.style.display = 'block';
+            resultContainer.innerHTML = `<p class="error-message">Błąd: ${error.message}</p>`;
+            endButton.style.display = 'block';        
+        });
+}
+document.getElementById('saveButton').addEventListener('click', saveData);
+
+function saveData() {
+    const searchInput = document.getElementById('searchInput').value.trim();
+    const quantity = parseFloat(document.getElementById('quantityInput').value);
+    const valueOutput = parseFloat(document.getElementById('valueOutput').value);
+    const endButton = document.getElementById('endButton'); 
+
+    if (!searchInput || isNaN(quantity)) {
+        alert('Proszę wprowadzić wartość do wyszukania i ilość.');
+        return;
+    }
+
+    if (valueOutput < 0) {
+        alert('Przekroczono wartość');
+        return;
+    }
+
+    const resultContainer = document.getElementById('resultContainer');
+    const data = JSON.parse(resultContainer.getAttribute('data-result'));
+
+    const currentAmount = parseFloat(data.filteredData[0][5]); 
+    const maxAmount = parseFloat(data.filteredData[0][4]);     
+
+    if (isNaN(currentAmount) || isNaN(maxAmount)) {
+        alert('Błąd: Nieprawidłowe dane ilości w wynikach wyszukiwania.');
+        return;
+    }
+
+    const newAmount = currentAmount + quantity;
+    console.log("Nowa ilość po dodaniu:", newAmount);
+
+    if (newAmount > maxAmount) {
+        alert('Przekroczono ilość');
+        return;
+    }
+
+    fetch('/updateQuantity', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ searchInput, quantity })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Dane zostały zapisane.');
+            document.getElementById('quantityInput').value = '';
+            document.getElementById('valueOutput').value = '';
+            document.getElementById('searchInput').value = '';
+
+            resultContainer.style.display = 'none';
+            document.getElementById('calculationContainer').style.display = 'none';
+            document.getElementById('saveButton').style.display = 'none';
+
+            endButton.style.display = 'block'; 
+            refreshReturnPolicy();
+        } else {
+            alert(data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Błąd zapisu:', error);
+        alert('Wystąpił błąd podczas zapisu danych.');
+        endButton.style.display = 'block'; 
+    });
+}
+function refreshReturnPolicy() {
+    fetch('/search?searchInput=')
+        .then(response => response.json())
+        .then(data => {
+            const returnValueText = data.returnValue || 'Brak danych';
+            document.getElementById('returnPolicy').textContent = returnValueText;
+        })
+        .catch(error => {
+            console.error('Błąd odświeżania returnPolicy:', error);
+            alert('Nie udało się odświeżyć danych polityki zwrotu.');
+        });
+}
+document.getElementById('endButton').addEventListener('click', () => {
+    fetch('/logout', { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                
+                document.getElementById('selectionSection').style.display = 'none';
+                document.getElementById('searchSection').style.display = 'none';
+                document.getElementById('loginSection').style.display = 'block';
+                document.getElementById('usernameInput').value = ''; //JS
+                alert('Zostałeś wylogowany.');
+            } else {
+                alert('Wystąpił błąd podczas wylogowywania: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Błąd wylogowania:', error);
+            alert('Wystąpił problem z wylogowaniem.');
+        });
+});
+document.addEventListener("DOMContentLoaded", () => {
+    const mainHeader = document.getElementById("mainHeader");
+    const returnButton = document.getElementById("returnButton");
+    const searchSection = document.getElementById("searchSection");
+
+    returnButton.addEventListener("click", () => {
+       
+        mainHeader.style.display = "none";
+        
+    });
+});
+
+</script>
+
+</body>
+</html>

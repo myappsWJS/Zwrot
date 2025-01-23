@@ -1,0 +1,18 @@
+{
+  "name": "Zwrot",
+  "version": "1.0.0",
+  "description": "Aplikacja do integracji z Google Sheets",
+  "main": "main.js",
+  "scripts": {
+    "start": "node main.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2",
+    "body-parser": "^1.20.2",
+    "googleapis": "^105.0.0",
+    "@google-cloud/local-auth": "^2.1.0"
+  }
+}

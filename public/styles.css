@@ -1,0 +1,163 @@
+    /* Ustawienie ogólnego stylu dla całego dokumentu */
+    body {
+        font-family: Arial, sans-serif; /* Ustawienie czcionki strony */
+        text-align: center;             /* Wyrównanie tekstu do środka */
+        margin: 10px;                   /* Margines wokół całej zawartości */
+        background-color: rgb(16, 2, 54); /* Kolor tła dla strony */
+        color: rgb(40, 146, 54);        /* Kolor tekstu na stronie */
+    }
+
+    /* Styl dla wszystkich elementów input */
+    input {
+        padding: 10px;                /* Odstęp wewnętrzny dla lepszej czytelności */
+        font-size: 18px;              /* Wielkość tekstu */
+        width: 80px;                  /* Szerokość pól tekstowych */
+    }
+    .input-1 {
+       width: 50px;                  /* Szerokość pól tekstowych */ 
+    }
+
+    /* Styl dla wszystkich przycisków */
+    button {
+         /*background-color: green;*/      /* Kolor tła przycisku  */
+        padding: 10px 15px;           /* Odstęp wewnętrzny, z większym poziomym marginesem */
+        font-size: 18px;              /* Wielkość tekstu przycisków */
+        cursor: pointer;              /* Zmiana kursora na wskaźnik przy najechaniu */
+    }
+    .button-1{
+      background-color: green;      /* Kolor tła przycisku wyszukiwania */
+        color: white;                 /* Kolor tekstu przycisku */
+    }
+
+    /* Styl dla tabeli wyników */
+    table {
+        border-collapse: collapse;    /* Zlikwidowanie odstępów między komórkami */
+        margin-top: 20px;             /* Odstęp nad tabelą */
+        width: 30%;                   /* Szerokość tabeli */
+        margin-left: auto;            /* Wycentrowanie tabeli */
+        margin-right: auto;
+    }
+
+    /* Styl dla nagłówków komórek w tabeli */
+    th, td {
+        border: 1px solid hsl(0, 0%, 0%); /* Kolor obramowania komórek */
+        padding: 4px;                 /* Odstęp wewnętrzny w komórkach */
+        text-align: left;             /* Wyrównanie tekstu do lewej */
+        color: #070707;               /* Kolor tekstu */
+    }
+
+    /* Styl dla nagłówków kolumn */
+    th {
+        background-color: #ffffff;    /* Kolor tła nagłówków */
+        width: 10%;                   /* Szerokość kolumny nagłówków */
+    }
+
+    /* Styl dla komórek z danymi */
+    td {
+        background-color: #ffffff;    /* Kolor tła komórek */
+        width: 15%;                   /* Szerokość kolumny z danymi */
+    }
+
+    /* Styl dla komunikatów o błędach i braku wyników */
+    .error-message, .no-results {
+        color: white;                 /* Kolor tekstu */
+        margin-top: 10px;             /* Odstęp od góry */
+    }
+
+    /* Styl tekstu w sekcji wyszukiwania */
+    #searchSection p {
+        font-size: 18px;              /* Większa czcionka dla wyświetlanych informacji */
+        line-height: 0.5; /* Zmniejszenie odstępu między wierszami */
+    }
+    /* Styl dla urządzeń o szerokości ekranu poniżej 768px */
+    @media (max-width: 768px) {
+        table {
+            width: 90%;               /* Zwiększenie szerokości tabeli na mniejszych ekranach */
+        }
+    }
+
+    /* Styl dla sekcji wprowadzania danych */
+    #inputSection {
+        display: flex;                /* Ustawienie elementów w kolumnie */
+        flex-direction: column;
+        align-items: center;          /* Wyśrodkowanie zawartości */
+        margin-top: 20px;             /* Odstęp od góry */
+    }
+   
+
+    /* Styl dla etykiet w sekcji wprowadzania danych */
+    #inputSection label {
+        color: white;                 /* Kolor tekstu etykiet */
+        font-size: 18px;              /* Rozmiar czcionki */
+        margin-bottom: 5px;           /* Odstęp poniżej etykiety */
+    }
+
+        /* Styl dla pól input w sekcji wprowadzania danych */
+    #inputSection input {
+        padding: 5px;                 /* Odstęp wewnętrzny */
+        font-size: 18px;              /* Wielkość tekstu */
+        width: 60px;                  /* Szerokość pola */
+        text-align: center;           /* Wyrównanie tekstu na środku */
+    }
+    
+    
+
+    /* Ukrywanie elementów (klasa pomocnicza) */
+    .hidden {
+        display: none;                /* Ukrycie elementów */
+    }
+    #paletaSection {
+        margin-bottom: 5px; /* Odstęp między sekcjami */
+        font-size: 18px; /* Rozmiar czcionki dla całej sekcji */
+    }
+    
+    #paletaSection label { 
+        font-size: 20px; /* Rozmiar czcionki dla etykiet */      
+    }
+    #paletaSection p {
+        font-size: 20px;              /* Wielkość tekstu */
+    }
+
+    #paletaSection input {
+        font-size: 18px; /* Rozmiar czcionki dla pól wejściowych */
+        outline: none; /* Usuwa podświetlenie (obramowanie) po kliknięciu */
+        background-color: rgb(16, 2, 54); /* Domyślne tło dla pól wejściowych */
+        color: white; 
+        border: 1px solid rgb(16, 2, 54); /* Obramowanie */
+        margin-bottom: 5px; /* Odstęp między sekcjami */
+} 
+    
+    #paletaSection input:focus {
+        border: none; /* Usuwa obramowanie, które pojawia się przy fokusu */
+        box-shadow: none; /* Usuwa cień, który czasem pojawia się po kliknięciu */
+    }
+    #selectionSection {
+        display: none;
+        text-align: center;
+        margin-top: 20px;
+    }
+    #selectionButtons {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+    }
+    #loadingMessage {
+        color: blue;
+        font-weight: bold;
+        display: none;
+        text-align: center;
+        margin-top: 10px;
+    }
+    #searchloadingMessage {
+        color: rgb(84, 194, 11);
+        font-weight: bold;
+        display: none;
+        text-align: center;
+        margin-top: 10px;
+    }
+    #noResultsMessage {
+        color: rgb(161, 192, 21);
+        font-weight: bold;
+        display: none;
+        text-align: center;
+    }
