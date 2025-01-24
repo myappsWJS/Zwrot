@@ -113,8 +113,8 @@ app.get('/searchZapas', async (req, res) => {
         const searchInput = req.query.searchInput.trim();
         const data = await getSheetData(IDZapas, 'Baza!A:D'); 
 
-        const headers = [data[0][0], [data[0][1], data[0][2], data[0][3]];
-        const filteredData = data.slice(1).map(row => [row[0], [row[1], row[2], row[3]]);
+        const headers = [data[0][1], data[0][2], data[0][3]];
+        const filteredData = data.slice(1).map(row => [row[1], row[2], row[3]]);
 
         const matchingData = filteredData.filter(row => 
             row.some(cell => cell && cell.toString() === searchInput)
