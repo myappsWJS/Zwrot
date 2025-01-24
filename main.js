@@ -113,9 +113,11 @@ app.get('/searchZapas', async (req, res) => {
         const searchInput = req.query.searchInput.trim();
         const data = await getSheetData(IDZapas, 'Baza!A:D'); 
 
-        const headers = [data[0][0], [data[0][1], data[0][2], data[0][3]];
-        const filteredData = data.slice(1).map(row => [row[0], [row[1], row[2], row[3]]);
+        // Uwzględnij kolumnę A w nagłówkach i danych
+        const headers = [data[0][0], data[0][1], data[0][2], data[0][3]];
+        const filteredData = data.slice(1).map(row => [row[0], row[1], row[2], row[3]]);
 
+        // Filtruj również według kolumny A
         const matchingData = filteredData.filter(row => 
             row.some(cell => cell && cell.toString() === searchInput)
         );
@@ -130,6 +132,7 @@ app.get('/searchZapas', async (req, res) => {
         res.status(500).json({ error: 'Wystąpił błąd podczas wyszukiwania danych zapasu.' });
     }
 });
+
 
 app.post('/updateQuantity', async (req, res) => {
     try {
