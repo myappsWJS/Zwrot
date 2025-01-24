@@ -11,8 +11,9 @@
 <div id="paletaSection">
 <h2>Zapas-KPI</h2>
 <p>LM - <span id="sklepName"></span></p>
-    
-    <label for="paletaInput"> NR:Palety ADRES :</label>
+
+
+    <label for="paletaInput">Nr.Palety ADRES:</label>
     <input type="tel" id="paletaInput" placeholder="Wprowadź numer palety">
 </div>
 
@@ -75,7 +76,7 @@
             resultContainer.innerHTML = '<p class="no-results">Brak danych.</p>';
             return;
         }
-        fetch(/searchZapas?searchInput=${encodeURIComponent(searchInput)})
+        fetch(`/searchZapas?searchInput=${encodeURIComponent(searchInput)}`)
             .then(response => response.json())
             .then(data => {
                 
@@ -89,7 +90,7 @@
                     lastSearchData.push(row);
                     tables += '<table>';
                     row.forEach((cell, index) => {
-                        tables += <tr><th>${data.headers[index]}</th><td>${cell}</td></tr>;
+                        tables += `<tr><th>${data.headers[index]}</th><td>${cell}</td></tr>`;
                     });
                     tables += '</table><br>';
                 });
@@ -98,7 +99,7 @@
                 document.getElementById('calculationContainer').style.display = 'block';
             })
             .catch(error => {
-                resultContainer.innerHTML = <p class="error-message">Błąd: ${error.message}</p>;
+                resultContainer.innerHTML = `<p class="error-message">Błąd: ${error.message}</p>`;
             });
     }
     document.getElementById('saveButton').addEventListener('click', function () {
