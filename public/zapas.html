@@ -9,11 +9,10 @@
 <body>
     
 <div id="paletaSection">
-<h2>Zapas-KPI</h2>
-<p>LM - <span id="sklepName"></span></p>
+    <h2>Zapas-KPI</h2>
+    <p>LM - <span id="sklepName"></span></p>
 
-
-    <label for="paletaInput">Paleta Nr ADRES :</label>
+    <label for="paletaInput">Paleta Nr ADRES:</label>
     <input type="tel" id="paletaInput" placeholder="Wprowadź numer palety">
 </div>
 
@@ -22,7 +21,21 @@
     <button id="searchButton" class="button-1">Wyszukaj</button>
 
     <h3>Wyniki wyszukiwania:</h3>
-    <div id="resultContainer" style="display: none;"></div>
+    <div id="resultContainer" style="display: none;">
+        <table id="resultsTable" style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr>
+                    <th>Kolumna A</th>
+                    <th>Kolumna B</th>
+                    <th>Kolumna C</th>
+                    <th>Kolumna D</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Dane będą wstawiane dynamicznie -->
+            </tbody>
+        </table>
+    </div>
 </div>
 
 <div id="calculationContainer" style="display: none;">
@@ -31,11 +44,12 @@
     <button id="saveButton" class="button-1">Zapisz</button>
 </div>
 
-<div id="endSessionContainer" style="margin-top: 20px;">
+<div id="endSessionContainer" style="margin-top: 20px; display: none;">
     <button id="endSessionButton">Zakończ</button>
 </div>
 
 <script>
+    // Pobieranie nazwy sklepu
     fetch('/getShopName')
         .then(response => response.json())
         .then(data => {
@@ -49,6 +63,7 @@
             console.error("Błąd podczas pobierania nazwy sklepu:", error);
         });
 
+    // Obsługa wyszukiwania
     document.getElementById('searchInput').addEventListener('keydown', (event) => {
         if (event.key === 'Enter') {
             searchData();
@@ -66,50 +81,55 @@
 
     function searchData() {
         const searchInput = document.getElementById('searchInput').value.trim();
-        const resultContainer = document.getElementById('resultContainer');//JS
+        const resultContainer = document.getElementById('resultContainer');
+        const resultsTableBody = document.querySelector('#resultsTable tbody');
 
         document.getElementById('endSessionContainer').style.display = 'none';
-        resultContainer.innerHTML = '<p class="loading-message">Wyszukiwanie danych...</p>';
+        resultsTableBody.innerHTML = ''; // Wyczyść poprzednie wyniki
         resultContainer.style.display = 'block';
 
         if (!searchInput) {
-            resultContainer.innerHTML = '<p class="no-results">Brak danych.</p>';
+            resultsTableBody.innerHTML = '<tr><td colspan="4">Brak danych.</td></tr>';
             return;
         }
+
         fetch(`/searchZapas?searchInput=${encodeURIComponent(searchInput)}`)
             .then(response => response.json())
             .then(data => {
-                
                 if (data.filteredData.length === 0) {
-                    resultContainer.innerHTML = '<p class="no-results">Brak pasujących wyników.</p>';
+                    resultsTableBody.innerHTML = '<tr><td colspan="4">Brak pasujących wyników.</td></tr>';
                     return;
                 }
-                let tables = '';
-                lastSearchData = [];
+
+                lastSearchData = data.filteredData;
                 data.filteredData.forEach(row => {
-                    lastSearchData.push(row);
-                    tables += '<table>';
-                    row.forEach((cell, index) => {
-                        tables += `<tr><th>${data.headers[index]}</th><td>${cell}</td></tr>`;
+                    const tableRow = document.createElement('tr');
+                    row.forEach(cell => {
+                        const tableCell = document.createElement('td');
+                        tableCell.textContent = cell || '';
+                        tableRow.appendChild(tableCell);
                     });
-                    tables += '</table><br>';
+                    resultsTableBody.appendChild(tableRow);
                 });
-                resultContainer.innerHTML = tables;
+
                 resultContainer.style.display = 'block';
                 document.getElementById('calculationContainer').style.display = 'block';
             })
             .catch(error => {
-                resultContainer.innerHTML = `<p class="error-message">Błąd: ${error.message}</p>`;
+                resultsTableBody.innerHTML = `<tr><td colspan="4" class="error-message">Błąd: ${error.message}</td></tr>`;
             });
     }
+
+    // Obsługa zapisu
     document.getElementById('saveButton').addEventListener('click', function () {
         const paletaNumber = document.getElementById('paletaInput').value.trim();
-        const quantity = parseFloat(document.getElementById('quantityInput').value); //JS
+        const quantity = parseFloat(document.getElementById('quantityInput').value);
 
         if (!paletaNumber || isNaN(quantity)) {
             alert("Wprowadź poprawny numer palety i ilość.");
             return;
         }
+
         const rowData = lastSearchData.length > 0 ? lastSearchData[0] : [];
         fetch('/saveToSheet', {
             method: 'POST',
@@ -122,9 +142,7 @@
         .then(data => {
             if (data.success) {
                 alert("Dane zostały zapisane.");
-
                 document.getElementById('searchInput').value = '';
-                document.getElementById('resultContainer').innerHTML = '';
                 document.getElementById('resultContainer').style.display = 'none';
                 document.getElementById('quantityInput').value = '';
                 document.getElementById('calculationContainer').style.display = 'none';
@@ -139,11 +157,12 @@
         });
     });
 
+    // Obsługa zakończenia sesji
     document.getElementById('endSessionButton').addEventListener('click', function() {
         window.location.href = '/';
     });
 </script>
-    
+
 <script src="keep-alive.js"></script>
     
 </body>
