@@ -6,7 +6,10 @@ const app = express();
 
 let IDSklep = ''; 
 let sklepName = ''; 
+
 let IDZapas = ''; 
+let cachedDataZapas = null;
+let cachedDataKontrolaZwrotu = null;
 
 const keys = {
     client_email: process.env.CLIENT_EMAIL,
@@ -32,6 +35,24 @@ async function getSheetData(spreadsheetId, range) {
     return data.data.values;
 }
 
+// Załaduj dane z arkusza "Zapas" i "Kontrola zwrotu" do pamięci podręcznej
+async function loadDataToCache() {
+    try {
+        const zapasData = await getSheetData(IDZapas, 'Baza!A:D');
+        cachedDataZapas = zapasData.slice(1).map(row => [row[0], row[1], row[2], row[3]]); // Zapisz dane bez nagłówków
+
+        const kontrolaData = await getSheetData(IDSklep, 'Kontrola zwrotu!A1:G');
+        cachedDataKontrolaZwrotu = kontrolaData.slice(1).map(row => [row[0], row[1], row[2], row[4], row[3], row[5]]); // Zapisz dane bez nagłówków
+        console.log('Dane zostały załadowane do pamięci.');
+    } catch (error) {
+        console.error('Błąd podczas ładowania danych:', error);
+    }
+}
+
+// Załaduj dane przy starcie serwera
+loadDataToCache();
+
+// Endpoint logowania
 app.post('/login', async (req, res) => {
     try {
         const username = req.body.username;
@@ -49,13 +70,11 @@ app.post('/login', async (req, res) => {
             if (shopRow) {
                 IDSklep = shopRow[1]; 
                 IDZapas = shopRow[2]; 
-                
-                const supplierData = await getSheetData(IDSklep, 'Kontrola zwrotu!I2:I2');
-                const returnPolicyData = await getSheetData(IDSklep, 'Kontrola zwrotu!J2:J2');
-                const supplier = supplierData[0][0] || 'Brak danych';
-                const returnPolicy = returnPolicyData[0][0] || 'Brak danych';
 
-                res.json({ success: true, sklep: sklepName, supplier, returnPolicy });
+                // Ładowanie danych do pamięci po logowaniu
+                await loadDataToCache();
+
+                res.json({ success: true, sklep: sklepName });
             } else {
                 res.json({ success: false, message: 'Sklep nie znaleziony' });
             }
@@ -67,63 +86,40 @@ app.post('/login', async (req, res) => {
     }
 });
 
-app.get('/sklepName', (req, res) => {
-    res.json({ sklepName });
-});
-
+// Endpoint wylogowania
 app.post('/logout', (req, res) => {
     try {
         IDSklep = '';
         sklepName = '';
         IDZapas = '';
+        cachedDataZapas = null;
+        cachedDataKontrolaZwrotu = null;
         res.json({ success: true, message: 'Wylogowano pomyślnie' });
     } catch (error) {
         res.status(500).json({ success: false, message: 'Wystąpił błąd podczas wylogowywania' });
     }
 });
 
-app.get('/search', async (req, res) => {
-    try {
-        const searchInput = req.query.searchInput.toLowerCase();
-        const data = await getSheetData(IDSklep, 'Kontrola zwrotu!A1:G');
-        const returnPolicyData = await getSheetData(IDSklep, 'Kontrola zwrotu!J2:J2');
-
-        const headers = [data[0][0], data[0][1], data[0][2], data[0][4], data[0][3], data[0][5], data[0][6]];
-        const filteredData = data.slice(1).map(row => [row[0], row[1], row[2], row[4], row[3], row[5]]);
-
-        const matchingData = filteredData.filter(row => 
-            (row[0] && row[0].toLowerCase() === searchInput) || 
-            (row[1] && row[1].toLowerCase() === searchInput)
-        );
-
-        const responseData = { 
-            headers, 
-            filteredData: matchingData, 
-            returnValue: returnPolicyData[0][0] || 'Brak danych' 
-        };
-
-        res.json(responseData);
-    } catch (error) {
-        res.status(500).json({ error: 'Wystąpił błąd podczas wyszukiwania danych' });
-    }
+// Endpoint pobierania danych o sklepie
+app.get('/sklepName', (req, res) => {
+    res.json({ sklepName });
 });
 
+// Endpoint do wyszukiwania w arkuszu zapasu
 app.get('/searchZapas', async (req, res) => {
     try {
         const searchInput = req.query.searchInput.trim();
-        const data = await getSheetData(IDZapas, 'Baza!A:D'); 
 
-        // Uwzględnij kolumnę A w nagłówkach i danych
-        const headers = [data[0][0], data[0][1], data[0][2], data[0][3]];
-        const filteredData = data.slice(1).map(row => [row[0], row[1], row[2], row[3]]);
+        if (!cachedDataZapas) {
+            return res.status(500).json({ error: 'Brak danych w pamięci. Spróbuj ponownie później.' });
+        }
 
-        // Filtruj również według kolumny A
-        const matchingData = filteredData.filter(row => 
+        const matchingData = cachedDataZapas.filter(row => 
             row.some(cell => cell && cell.toString() === searchInput)
         );
 
         const responseData = { 
-            headers, 
+            headers: ['Kolumna A', 'Kolumna B', 'Kolumna C', 'Kolumna D'], // Nagłówki dla danych
             filteredData: matchingData
         };
 
@@ -133,7 +129,7 @@ app.get('/searchZapas', async (req, res) => {
     }
 });
 
-
+// Endpoint do aktualizacji ilości
 app.post('/updateQuantity', async (req, res) => {
     try {
         const { searchInput, quantity } = req.body;
@@ -163,6 +159,7 @@ app.post('/updateQuantity', async (req, res) => {
     }
 });
 
+// Endpoint do zapisywania danych do arkusza
 app.post('/saveToSheet', async (req, res) => {
     try {
         const { paletaNumber, rowData, quantity } = req.body;
@@ -184,15 +181,21 @@ app.post('/saveToSheet', async (req, res) => {
             requestBody: { values: [newRow] },
         });
 
+        // Po zapisaniu nowych danych odśwież dane w pamięci
+        await loadDataToCache();
+
         res.json({ success: true });
     } catch (error) {
         res.status(500).json({ success: false, message: 'Wystąpił błąd podczas zapisu do Arkusza3.' });
     }
 });
 
+// Endpoint do pobrania nazwy sklepu
 app.get('/getShopName', (req, res) => {
     res.json({ shopName: sklepName });
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT);
+app.listen(PORT, () => {
+    console.log(`Serwer działa na porcie ${PORT}`);
+});
