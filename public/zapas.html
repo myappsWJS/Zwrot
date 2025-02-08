@@ -12,7 +12,6 @@
 <h2>Zapas-KPI</h2>
 <p>LM - <span id="sklepName"></span></p>
 
-
     <label for="paletaInput">Nr.Palety ADRES:</label>
     <input type="tel" id="paletaInput" placeholder="Wprowadź numer palety">
 </div>
@@ -54,19 +53,12 @@
             searchData();
         }
     });
-    document.getElementById('searchInput').addEventListener('input', () => {
-        const searchInput = document.getElementById('searchInput').value.trim();
-        if (/^\d{13}$/.test(searchInput)) {
-            searchData();
-        }
-    });
-
-    let lastSearchData = [];
     document.getElementById('searchButton').addEventListener('click', searchData);
 
+    let lastSearchData = [];
     function searchData() {
         const searchInput = document.getElementById('searchInput').value.trim();
-        const resultContainer = document.getElementById('resultContainer');//JS
+        const resultContainer = document.getElementById('resultContainer');
 
         document.getElementById('endSessionContainer').style.display = 'none';
         resultContainer.innerHTML = '<p class="loading-message">Wyszukiwanie danych...</p>';
@@ -76,10 +68,10 @@
             resultContainer.innerHTML = '<p class="no-results">Brak danych.</p>';
             return;
         }
+
         fetch(`/searchZapas?searchInput=${encodeURIComponent(searchInput)}`)
             .then(response => response.json())
             .then(data => {
-                
                 if (data.filteredData.length === 0) {
                     resultContainer.innerHTML = '<p class="no-results">Brak pasujących wyników.</p>';
                     return;
@@ -102,14 +94,16 @@
                 resultContainer.innerHTML = `<p class="error-message">Błąd: ${error.message}</p>`;
             });
     }
+
     document.getElementById('saveButton').addEventListener('click', function () {
         const paletaNumber = document.getElementById('paletaInput').value.trim();
-        const quantity = parseFloat(document.getElementById('quantityInput').value); //JS
+        const quantity = parseFloat(document.getElementById('quantityInput').value);
 
         if (!paletaNumber || isNaN(quantity)) {
             alert("Wprowadź poprawny numer palety i ilość.");
             return;
         }
+
         const rowData = lastSearchData.length > 0 ? lastSearchData[0] : [];
         fetch('/saveToSheet', {
             method: 'POST',
@@ -122,7 +116,6 @@
         .then(data => {
             if (data.success) {
                 alert("Dane zostały zapisane.");
-
                 document.getElementById('searchInput').value = '';
                 document.getElementById('resultContainer').innerHTML = '';
                 document.getElementById('resultContainer').style.display = 'none';
@@ -143,7 +136,7 @@
         window.location.href = '/';
     });
 </script>
-    
+
 <script src="keep-alive.js"></script>
     
 </body>
