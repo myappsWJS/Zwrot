@@ -146,7 +146,8 @@ app.post('/updateQuantity', async (req, res) => {
 
         const existingQuantity = parseFloat(sheetData[rowIndex][4]) || 0;
         const newQuantity = existingQuantity + quantity;
-
+        console.log('Zapisuję do arkusza (newQuantity):', newQuantity);
+        console.log('Row:', rowIndex + 1);
         await google.sheets({ version: 'v4', auth: client }).spreadsheets.values.update({
             spreadsheetId,
             range: `Zamówienia suma!K${rowIndex + 1}`,
@@ -193,3 +194,4 @@ app.get('/getShopName', (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT);
+
