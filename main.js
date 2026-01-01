@@ -144,7 +144,7 @@ app.post('/updateQuantity', async (req, res) => {
             return res.json({ success: false, message: 'Nie znaleziono danych w Arkusz2.' });
         }
 
-        const existingQuantity = parseFloat(sheetData[rowIndex][4]) || 0;
+        const existingQuantity = parseFloat(sheetData[rowIndex][10]) || 0;
         const newQuantity = existingQuantity + quantity;
         console.log('Zapisuję do arkusza (newQuantity):', newQuantity);
         console.log('Row:', rowIndex + 1);
@@ -194,4 +194,5 @@ app.get('/getShopName', (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT);
+
 
